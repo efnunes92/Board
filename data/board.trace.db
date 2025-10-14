@@ -1,0 +1,9 @@
+2025-10-13 15:18:09.291453-03:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "BOARDS" not found (this database is empty); SQL statement:
+select * from boards [42104-232]
+2025-10-13 15:18:18.125038-03:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "BOARDS" not found (this database is empty); SQL statement:
+select * from boards [42104-232]
+2025-10-13 15:18:19.125976-03:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "BOARDS" not found (this database is empty); SQL statement:
+select * from boards [42104-232]
