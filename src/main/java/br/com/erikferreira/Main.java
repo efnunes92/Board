@@ -6,6 +6,7 @@ import liquibase.LabelExpression;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import ui.MainMenu;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ public class Main {
                 System.out.println("Migrations executadas com sucesso!");
             }
             System.out.println("Aplicação rodando. Pressione Ctrl+C para sair.");
+            new MainMenu().execute();
             Thread.currentThread().join();
 
         } catch (SQLException | InterruptedException e) {

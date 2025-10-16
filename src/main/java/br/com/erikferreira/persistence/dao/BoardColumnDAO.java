@@ -1,13 +1,15 @@
 package br.com.erikferreira.persistence.dao;
 
 import br.com.erikferreira.persistence.entity.BoardColumnEntity;
-import br.com.erikferreira.persistence.entity.BoardColumnKindEnum;
+
 import lombok.RequiredArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static br.com.erikferreira.persistence.entity.BoardColumnKindEnum.findByName;
 
 @RequiredArgsConstructor
 public class BoardColumnDAO {
@@ -31,22 +33,22 @@ public class BoardColumnDAO {
         }
     }
 
-    public List<BoardColumnEntity> findByBoardId(Long id) throws SQLException{
-        var sql = "SELECT id, name, order_index, kind, board_id FROM BOARD_COLUMNS WHERE board_id = ? ORDER BY order_index";
-        try(var ps = connection.prepareStatement(sql)) {
+    public List<BoardColumnEntity> findByBoardId(Long id) throws SQLException {
+        List<BoardColumnEntity> list = new ArrayList<>();
+        var sql = "SELECT id, name, order_index, kind FROM BOARD_COLUMNS WHERE board_id = ? ORDER BY order_index";
+        try (var ps = connection.prepareStatement(sql)) {
             ps.setLong(1, id);
-            try (var rs = ps.executeQuery()) {
-                var list = new ArrayList<BoardColumnEntity>();
-                while (rs.next()) {
-                    var entity = new BoardColumnEntity();
-                    entity.setId(rs.getLong("id"));
-                    entity.setName(rs.getString("name"));
-                    entity.setOrderIndex(rs.getInt("order_index"));
-                    entity.setKind(BoardColumnKindEnum.valueOf(rs.getString("kind")));
-                    list.add(entity);
-                }
-                return list;
+            ps.executeQuery();
+            var rs = ps.getResultSet();
+            while (rs.next()) {
+                var entity = new BoardColumnEntity();
+                entity.setId(rs.getLong("id"));
+                entity.setName(rs.getString("name"));
+                entity.setOrderIndex(rs.getInt("order_index"));
+                entity.setKind(findByName(rs.getString("kind")));
+                list.add(entity);
             }
         }
+        return list;
     }
 }
