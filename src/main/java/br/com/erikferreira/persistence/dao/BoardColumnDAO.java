@@ -3,12 +3,14 @@ package br.com.erikferreira.persistence.dao;
 import br.com.erikferreira.dto.BoardColumnDTO;
 import br.com.erikferreira.persistence.entity.BoardColumnEntity;
 
+import br.com.erikferreira.persistence.entity.CardEntity;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static br.com.erikferreira.persistence.entity.BoardColumnKindEnum.findByName;
 
@@ -76,5 +78,32 @@ public class BoardColumnDAO {
             }
         }
         return list;
+    }
+
+    public Optional<BoardColumnEntity> findById(Long id) throws SQLException {
+        List<BoardColumnEntity> list = new ArrayList<>();
+        var sql = "SELECT bc.name, bc.kind, c.id, c.title, c.description" +
+                    "FROM BOARD_COLUMNS " +
+                    "INNER JOIN CARDS c " +
+                    "ON c.board_column_id = b.id " +
+                    "WHERE board_id = ? ";
+        try (var ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeQuery();
+            var rs = ps.getResultSet();
+            if(rs.next()){
+                var entity = new BoardColumnEntity();
+                entity.setName(rs.getString("bc.name"));
+                entity.setKind(findByName(rs.getString("bc.kind")));
+                do {
+                    var card = new CardEntity();
+                    card.setId(rs.getLong("c.id"));
+                    card.setTitle(rs.getString("c.title"));
+                    card.setDescription(rs.getString("c.description"));
+                    entity.getCards().add(card);
+                }while (rs.next());
+            }
+        }
+        return Optional.empty();
     }
 }
