@@ -1,6 +1,6 @@
 package br.com.erikferreira.persistence.dao;
 
-import br.com.erikferreira.dto.CardDetails;
+import br.com.erikferreira.dto.CardDetailsDTO;
 import br.com.erikferreira.persistence.entity.CardEntity;
 import lombok.AllArgsConstructor;
 
@@ -17,7 +17,7 @@ public class CardDAO {
 
     private Connection connection;
 
-    public Optional<CardDetails> findById(Long id) throws SQLException {
+    public Optional<CardDetailsDTO> findById(Long id) throws SQLException {
         List<CardEntity> list = new ArrayList<>();
         var sql = "SELECT c.id, c.title, c.description, c.BOARD_COLUMN_ID" +
                   "       b.blocked_at, b.block_reason, " +
@@ -37,11 +37,11 @@ public class CardDAO {
             ps.executeQuery();
             var rs = ps.getResultSet();
             if(rs.next()) {
-                var dto = new CardDetails(
+                var dto = new CardDetailsDTO(
                         rs.getLong("c.id"),
                         rs.getString("c.title"),
                         rs.getString("c.description"),
-                        true,
+                        rs.getString("b.block_reason").isEmpty(),
                         toOffsetDateTime(rs.getTimestamp("b.blocked_at")),
                         rs.getString("b.block_reason"),
                         rs.getInt("blocks_amount"),
