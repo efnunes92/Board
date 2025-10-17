@@ -1,5 +1,6 @@
 package br.com.erikferreira.persistence.dao;
 
+import br.com.erikferreira.dto.BoardColumnDTO;
 import br.com.erikferreira.persistence.entity.BoardColumnEntity;
 
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,31 @@ public class BoardColumnDAO {
                 entity.setOrderIndex(rs.getInt("order_index"));
                 entity.setKind(findByName(rs.getString("kind")));
                 list.add(entity);
+            }
+        }
+        return list;
+    }
+
+    public List<BoardColumnDTO> findByBoardIdWithDatails(Long id) throws SQLException {
+        List<BoardColumnDTO> list = new ArrayList<>();
+        var sql = "SELECT bc.id, bc.name, bc.kind, " +
+                   "COUNT(SELECT c.id " +
+                    "from CARDS c " +
+                   "where c.board_column_id = bc.id) cards_amount" +
+                    "FROM BOARD_COLUMNS bc" +
+                   "WHERE board_id = ? " +
+                   "ORDER BY order_index";
+        try (var ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeQuery();
+            var rs = ps.getResultSet();
+            while (rs.next()) {
+                var dtoId = rs.getLong("bc.id");
+                var dtoName = rs.getString("bc.name");
+                var dtoKind = findByName(rs.getString("bc.kind"));
+                var dtoCardsAmaunt = rs.getInt("cards_amount");
+                var dto = new BoardColumnDTO(dtoId, dtoName, dtoKind, dtoCardsAmaunt);
+                list.add(dto);
             }
         }
         return list;
