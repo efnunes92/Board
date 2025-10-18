@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static br.com.erikferreira.persistence.entity.BoardColumnKindEnum.findByName;
+import static java.util.Objects.isNull;
 
 @RequiredArgsConstructor
 public class BoardColumnDAO {
@@ -58,20 +59,20 @@ public class BoardColumnDAO {
     public List<BoardColumnDTO> findByBoardIdWithDatails(Long id) throws SQLException {
         List<BoardColumnDTO> list = new ArrayList<>();
         var sql = "SELECT bc.id, bc.name, bc.kind, " +
-                   "COUNT(SELECT c.id " +
+                   "(SELECT COUNT(c.id) " +
                     "from CARDS c " +
-                   "where c.board_column_id = bc.id) cards_amount" +
-                    "FROM BOARD_COLUMNS bc" +
-                   "WHERE board_id = ? " +
+                   "where c.board_column_id = bc.id) cards_amount " +
+                   " FROM BOARD_COLUMNS bc" +
+                   " WHERE board_id = ? " +
                    "ORDER BY order_index";
         try (var ps = connection.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeQuery();
             var rs = ps.getResultSet();
             while (rs.next()) {
-                var dtoId = rs.getLong("bc.id");
-                var dtoName = rs.getString("bc.name");
-                var dtoKind = findByName(rs.getString("bc.kind"));
+                var dtoId = rs.getLong("id");
+                var dtoName = rs.getString("name");
+                var dtoKind = findByName(rs.getString("kind"));
                 var dtoCardsAmaunt = rs.getInt("cards_amount");
                 var dto = new BoardColumnDTO(dtoId, dtoName, dtoKind, dtoCardsAmaunt);
                 list.add(dto);
@@ -83,27 +84,31 @@ public class BoardColumnDAO {
     public Optional<BoardColumnEntity> findById(Long id) throws SQLException {
         List<BoardColumnEntity> list = new ArrayList<>();
         var sql = "SELECT bc.name, bc.kind, c.id, c.title, c.description" +
-                    "FROM BOARD_COLUMNS " +
-                    "INNER JOIN CARDS c " +
-                    "ON c.board_column_id = b.id " +
-                    "WHERE board_id = ? ";
+                  "  FROM BOARD_COLUMNS bc" +
+                  "  LEFT JOIN CARDS c " +
+                  "    ON c.board_column_id = bc.id " +
+                  " WHERE board_id = ? ";
         try (var ps = connection.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeQuery();
             var rs = ps.getResultSet();
             if(rs.next()){
                 var entity = new BoardColumnEntity();
-                entity.setName(rs.getString("bc.name"));
-                entity.setKind(findByName(rs.getString("bc.kind")));
+                entity.setName(rs.getString("name"));
+                entity.setKind(findByName(rs.getString("kind")));
                 do {
+                    if(isNull(rs.getString("title"))){
+                        break;
+                    }
                     var card = new CardEntity();
-                    card.setId(rs.getLong("c.id"));
-                    card.setTitle(rs.getString("c.title"));
-                    card.setDescription(rs.getString("c.description"));
+                    card.setId(rs.getLong("id"));
+                    card.setTitle(rs.getString("title"));
+                    card.setDescription(rs.getString("description"));
                     entity.getCards().add(card);
                 }while (rs.next());
+                return Optional.of(entity);
             }
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 }

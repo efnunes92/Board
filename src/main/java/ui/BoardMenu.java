@@ -1,10 +1,14 @@
 package ui;
 
+import br.com.erikferreira.dto.BoardColumnIdOrderDTO;
 import br.com.erikferreira.persistence.entity.BoardColumnEntity;
+import br.com.erikferreira.persistence.entity.BoardColumnKindEnum;
 import br.com.erikferreira.persistence.entity.BoardEntity;
+import br.com.erikferreira.persistence.entity.CardEntity;
 import br.com.erikferreira.service.BoardColumnQueryService;
 import br.com.erikferreira.service.BoardQueryService;
 import br.com.erikferreira.service.CardQueryService;
+import br.com.erikferreira.service.CardService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -21,7 +25,7 @@ public class BoardMenu {
 
     public void execute() {
         try {
-            System.out.printf("Bem vindo ao board %s, selecione a operação desejada:".formatted(board.getName()));
+            System.out.printf("Bem vindo ao board %s, selecione a operação desejada:\n".formatted(board.getName()));
             var option = -1;
             while(option != 9){
                 System.out.println("1 - Criar um card");
@@ -55,10 +59,28 @@ public class BoardMenu {
         }
     }
 
-    private void createCard() {
+    private void createCard() throws SQLException {
+        var card = new CardEntity();
+        scanner.nextLine();
+        System.out.println("Digite o titulo do card: ");
+        card.setTitle(scanner.nextLine());
+        System.out.println("Digite a descrição do card: ");
+        card.setDescription(scanner.nextLine());
+        card.setBoardColumnEntity(board.getInitialColumn());
+        try(var connection = getConnection()) {
+            new CardService(connection).insert(card);
+        }
     }
 
-    private void moveCard() {
+    private void moveCard() throws SQLException {
+        System.out.println("Informe o id do card que deseja mover para a proxima coluna: ");
+        var cardId = scanner.nextLong();
+        var boardColumnsInfo = board.getBoardColumns().stream()
+                .map(bc -> new BoardColumnIdOrderDTO(bc.getId(), bc.getOrderIndex(), bc.getKind()))
+                .toList();
+        try(var connection = getConnection()) {
+            new CardService(connection).moveCard(cardId, boardColumnsInfo);
+        }
     }
 
     private void blockCard() {
@@ -97,7 +119,7 @@ public class BoardMenu {
             column.ifPresent(co -> {
                 System.out.printf("Coluna %s tipo %s\n", co.getName(), co.getKind());
                 co.getCards().forEach(
-                        ca -> System.out.printf("Card %s: %s\nDescrição: %s",
+                        ca -> System.out.printf("Card %s: %s\nDescrição: %s\n",
                                 ca.getId(), ca.getTitle(), ca.getDescription()));
             });
         }
@@ -115,7 +137,7 @@ public class BoardMenu {
                                 System.out.println(c.blocked() ?
                                         "Está bloqueado. Motivo: " + c.blockReason() :
                                         "Não está bloqueado");
-                                System.out.printf("Já foi bloqueado %s vezes", c.blocksAmount());
+                                System.out.printf("Já foi bloqueado %s vezes\n", c.blocksAmount());
                                 System.out.printf("Está no momento na coluna %s - %s\n", c.columnId(), c.columnName());
                             },
                             () -> System.out.printf("Card de id %s, não encontrado!\n", selectedCard));

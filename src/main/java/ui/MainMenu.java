@@ -72,12 +72,12 @@ public class MainMenu {
 
         System.out.println("Informe o nome da coluna final: ");
         var finalColumnName = scanner.next();
-        var finalColumn = createColumn(finalColumnName, BoardColumnKindEnum.PENDING, hasMoreThan3Columns + 1);
+        var finalColumn = createColumn(finalColumnName, BoardColumnKindEnum.FINAL, hasMoreThan3Columns + 1);
         columns.add(finalColumn);
 
         System.out.println("Informe o nome da coluna de cancelamento: ");
         var cancelColumnName = scanner.next();
-        var cancelColumn = createColumn(cancelColumnName, BoardColumnKindEnum.PENDING, hasMoreThan3Columns + 2);
+        var cancelColumn = createColumn(cancelColumnName, BoardColumnKindEnum.CANCEL, hasMoreThan3Columns + 2);
         columns.add(cancelColumn);
 
         entity.setBoardColumns(columns);
