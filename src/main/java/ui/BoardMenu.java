@@ -80,6 +80,8 @@ public class BoardMenu {
                 .toList();
         try(var connection = getConnection()) {
             new CardService(connection).moveCard(cardId, boardColumnsInfo);
+        }catch (RuntimeException e){
+            System.out.println(e.getMessage());
         }
     }
 
@@ -89,7 +91,18 @@ public class BoardMenu {
     private void unblockCard() {
     }
 
-    private void cancelCard() {
+    private void cancelCard() throws SQLException {
+        System.out.println("Informe o id do card que deseja mover para a coluna de cancelamento: ");
+        var cardId = scanner.nextLong();
+        var cancelColumn = board.getCancelColumn();
+        var boardColumnsInfo = board.getBoardColumns().stream()
+                .map(bc -> new BoardColumnIdOrderDTO(bc.getId(), bc.getOrderIndex(), bc.getKind()))
+                .toList();
+        try(var connection = getConnection()) {
+            new CardService(connection).cancel(cardId, cancelColumn.getId(), boardColumnsInfo);
+        }catch (RuntimeException e){
+            System.out.println(e.getMessage());
+        }
     }
 
     private void showBoard() throws SQLException {
