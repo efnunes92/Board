@@ -7,6 +7,7 @@ import br.com.erikferreira.exception.CardFinishedException;
 import br.com.erikferreira.exception.EntityNotFoundException;
 import br.com.erikferreira.persistence.dao.BlockDAO;
 import br.com.erikferreira.persistence.dao.CardDAO;
+import br.com.erikferreira.persistence.dao.UnblockDAO;
 import br.com.erikferreira.persistence.entity.BoardColumnKindEnum;
 import br.com.erikferreira.persistence.entity.CardEntity;
 import lombok.AllArgsConstructor;
@@ -114,4 +115,21 @@ public class CardService {
         }
     }
 
+    public void unblock(final Long id, final String reason) throws SQLException {
+        try {
+            var dao = new CardDAO(connection);
+            var optional = dao.findById(id);
+            var dto = optional.orElseThrow(() -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id)));
+            if(!dto.blocked()){
+                var message = "O card %s está desbloqueado".formatted(id);
+                throw new CardBlockedException(message);
+            }
+            var unblockDao = new UnblockDAO(connection);
+            unblockDao.unblock(id, reason);
+            connection.commit();
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        }
+    }
 }
