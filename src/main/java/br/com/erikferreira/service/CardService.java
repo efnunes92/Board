@@ -5,6 +5,7 @@ import br.com.erikferreira.dto.CardDetailsDTO;
 import br.com.erikferreira.exception.CardBlockedException;
 import br.com.erikferreira.exception.CardFinishedException;
 import br.com.erikferreira.exception.EntityNotFoundException;
+import br.com.erikferreira.persistence.dao.BlockDAO;
 import br.com.erikferreira.persistence.dao.CardDAO;
 import br.com.erikferreira.persistence.entity.BoardColumnKindEnum;
 import br.com.erikferreira.persistence.entity.CardEntity;
@@ -79,6 +80,33 @@ public class CardService {
                     .filter(bc -> bc.order() == currentColumn.order() + 1)
                     .findFirst().orElseThrow(() -> new IllegalStateException("O card está cancelado"));
             dao.moveToColumn(cancelColumnId, cardId);
+            connection.commit();
+        }catch(Exception e){
+            connection.rollback();
+            throw e;
+        }
+    }
+
+    public void block(final Long id, final String reason, final List<BoardColumnIdOrderDTO> boardColumnInfo) throws SQLException {
+        try{
+            var dao = new CardDAO(connection);
+            var optional = dao.findById(id);
+            var dto = optional.orElseThrow(() -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id)));
+            if(dto.blocked()){
+                var message = "O card %s está bloqueado".formatted(id);
+                throw new CardBlockedException(message);
+            }
+            var currentColumn = boardColumnInfo.stream()
+                    .filter(bc -> bc.id().equals(dto.columnId()))
+                    .findFirst()
+                    .orElseThrow();
+            if(currentColumn.kind().equals(BoardColumnKindEnum.FINAL) ||
+                    currentColumn.kind().equals(BoardColumnKindEnum.CANCEL)) {
+                var message = "O card está em uma coluna do tipo %s não pode ser bloqueado".formatted(currentColumn.kind());
+                throw new IllegalStateException(message);
+            }
+            var blockDao = new BlockDAO(connection);
+            blockDao.block(id, reason);
             connection.commit();
         }catch(Exception e){
             connection.rollback();
